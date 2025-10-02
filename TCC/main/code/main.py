@@ -2,7 +2,7 @@ import cv2
 import pytesseract
 
 # Ajuste se necessário no Windows
-pytesseract.pytesseract.tesseract_cmd = r"C:\Users\caiop\AppData\Local\Programs\Python\Python313\Scripts"
+# pytesseract.pytesseract.tesseract_cmd = r"C:\Users\caiop\AppData\Local\Programs\Python\Python313\Scripts"
 
 # Carregar o classificador Haar Cascade
 cascade_path = "cascade/haarcascade_russian_plate_number.xml"
