@@ -3,7 +3,7 @@ import cv2
 cascade_path = "cascade/haarcascade_russian_plate_number.xml"
 placa_cascade = cv2.CascadeClassifier(cascade_path)
 
-##img = cv2.imread("imgs/Placa-Mercosul-3.jpg")
+img = cv2.imread("imgs/Placa-Mercosul-3.jpg")
 imgcinza = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 placas = placa_cascade.detectMultiScale(imgcinza)
 
