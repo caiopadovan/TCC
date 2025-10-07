@@ -7,7 +7,7 @@ import csv
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-yolo_model_path = r"models/license_plate_detector.pt"  # ajuste para onde você salvou o .pt
+yolo_model_path = r"models/license_plate_detector.pt" 
 model = YOLO(yolo_model_path)
 
 # --- PASTAS DE INPUT/OUTPUT ---
