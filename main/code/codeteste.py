@@ -1,59 +1,69 @@
+from ultralytics import YOLO
 import cv2
 import pytesseract
 import re
+import os
 
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-caminho = "models/haarcascade_russian_plate_number.xml"
-cascade = cv2.CascadeClassifier(caminho)
+model_path = r"models/license_plate_detector.pt"
+model = YOLO(model_path)
 
-img = cv2.imread("imgs/Placa3.jpg")
-img_cinza = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+# --- ABRIR VÍDEO ---
+video_path = "video/video.mp4"
+cap = cv2.VideoCapture(video_path)
 
-# Detecta a placa
-placas = cascade.detectMultiScale(img_cinza, scaleFactor=1.1, minNeighbors=4, minSize=(30,30))
+# --- ARRAY PARA GUARDAR AS PLACAS DETECTADAS ---
+placas_detectadas = []
 
-if len(placas) == 0:
-    print("Nenhuma placa detectada!")
-else:
-    for (x, y, w, h) in placas:
-        placa_img = img_cinza[y:y+h, x:x+w]
+# --- LOOP PRINCIPAL ---
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break  # fim do vídeo
 
-        # Remove borda (5%)
-        h_img, w_img = placa_img.shape
-        margem = 0.05
-        placa_img = placa_img[int(h_img*margem):int(h_img*(1-margem)),
-                              int(w_img*margem):int(w_img*(1-margem))]
-        
-        # Reduz ruído sem borrar bordas
-        placa_img = cv2.bilateralFilter(placa_img, 9, 75, 75)
-        
-        # Aumenta contraste e brilho
-        placa_img = cv2.convertScaleAbs(placa_img, alpha=1.5, beta=20)
+    # --- DETECÇÃO COM YOLO ---
+    results = model.predict(frame, conf=0.5, verbose=False)
 
-        _,placa_img = cv2.threshold(placa_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    for r in results:
+        for box in r.boxes:
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-        # Redimensiona a imagem
-        placa_img = cv2.resize(placa_img, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+            # --- RECORTAR PLACA ---
+            placa_crop = frame[y1:y2, x1:x2]
+            if placa_crop.size == 0:
+                continue
 
-        # Suaviza para reduzir ruidos
-        placa_img = cv2.medianBlur(placa_img, 3)
+            placa_gray = cv2.cvtColor(placa_crop, cv2.COLOR_BGR2GRAY)
+            placa_gray = cv2.bilateralFilter(placa_gray, 9, 75, 75)
+            _, placa_bin = cv2.threshold(placa_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-        # Código para aceitar apenas números e letras e tentar detectar apenas uma pálavra
-        placa_texto = pytesseract.image_to_string(placa_img,config='--psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
-        placa_texto = ''.join(filter(str.isalnum, placa_texto))
+            # --- OCR ---
+            texto = pytesseract.image_to_string(
+                placa_bin,
+                config='--psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+            )
 
-        # Remove caracteres diferentes e normaliza
-        placa_texto = re.sub(r'[^A-Z0-9]', '', placa_texto.upper())
-        if len(placa_texto) > 7:
-            placa_texto = placa_texto[-7:]
+            texto = re.sub(r'[^A-Z0-9]', '', texto.upper())
+            if len(texto) > 7:
+                texto = texto[-7:]
+            if texto and texto not in placas_detectadas and len(texto) >= 6:
+                placas_detectadas.append(texto)
+                print("Placa detectada:", texto)
 
-        print("Placa detectada:", placa_texto)
+            # --- DESENHAR NO FRAME ---
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(frame, texto, (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
-        # Faz um retângulo em volta da placa
-        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    # --- MOSTRAR VÍDEO EM TEMPO REAL ---
+    cv2.imshow("Detecção de Placas", frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
-    cv2.imshow("Carro", img)
-    cv2.imshow("Placa Detectada", placa_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+# --- FINALIZAR ---
+cap.release()
+cv2.destroyAllWindows()
+
+print("\n✅ Placas encontradas durante o vídeo:")
+print(placas_detectadas)
