@@ -5,10 +5,8 @@ import re
 import os
 import csv
 
-# --- CONFIGURAÇÃO DO TESSERACT ---
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-# --- CAMINHO DO MODELO YOLOv8 LOCAL ---
 yolo_model_path = r"models/license_plate_detector.pt"  # ajuste para onde você salvou o .pt
 model = YOLO(yolo_model_path)
 
@@ -81,4 +79,4 @@ with open(csv_file, "w", newline="", encoding="utf-8") as f:
     writer.writerow(["Imagem", "Placa", "ArquivoRecortado"])
     writer.writerows(csv_data)
 
-print("\n✅ Processamento concluído! Imagens e resultados salvos em 'output_yolo'.")
+print("\n Processamento concluído! Imagens e resultados salvos em 'output_yolo'.")
