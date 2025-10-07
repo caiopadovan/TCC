@@ -4,7 +4,7 @@ import pytesseract
 # Ajuste se necessário no Windows
 
 # Carregar o classificador Haar Cascade
-cascade_path = "cascade/haarcascade_russian_plate_number.xml"
+cascade_path = "models/haarcascade_russian_plate_number.xml"
 placa_cascade = cv2.CascadeClassifier(cascade_path)
 
 if placa_cascade.empty():

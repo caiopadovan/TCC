@@ -1,6 +1,7 @@
 # TCC
-Antes de utilizar o código é necessário instalar os requerimentos no computador, vá no pesquisar do computador e digite por "Prompt de Comando" ou "cmd" e escreva
+
+Antes de rodar, abra o terminal e instale o YOLOv8 e dependências:
 
 pip install opencv-python pytesseract imutils
 
-Após baixar o código funcionará normalmente
+pip install ultralytics pytesseract opencv-python
