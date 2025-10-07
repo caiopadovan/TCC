@@ -18,6 +18,7 @@ os.makedirs(output_folder, exist_ok=True)
 # --- CSV PARA RESULTADOS ---
 csv_file = os.path.join(output_folder, "placas_resultados.csv")
 csv_data = []
+placas_detectadas = []
 
 # --- PROCESSAR TODAS AS IMAGENS ---
 for nome_arquivo in os.listdir(input_folder):
@@ -58,6 +59,8 @@ for nome_arquivo in os.listdir(input_folder):
                 texto = texto[-7:]
             if not texto:
                 texto = "SEM_TEXTO"
+            if texto != "SEM_TEXTO":
+                placas_detectadas.append((nome_arquivo, texto))
 
             # --- SALVAR IMAGEM RECORTADA ---
             nome_saida = os.path.join(output_folder, f"{os.path.splitext(nome_arquivo)[0]}_{texto}.jpg")
@@ -80,3 +83,4 @@ with open(csv_file, "w", newline="", encoding="utf-8") as f:
     writer.writerows(csv_data)
 
 print("\n Processamento concluído! Imagens e resultados salvos em 'output_yolo'.")
+print("Todas as placas detectadas:", placas_detectadas)
