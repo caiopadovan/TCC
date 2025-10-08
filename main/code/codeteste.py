@@ -2,48 +2,51 @@ from ultralytics import YOLO
 import cv2
 import pytesseract
 import re
-import os
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 model_path = r"models/license_plate_detector.pt"
 model = YOLO(model_path)
 
-# --- ABRIR VÍDEO ---
+# Vídeo
 video_path = "video/video.mp4"
 cap = cv2.VideoCapture(video_path)
 
-# --- ARRAY PARA GUARDAR AS PLACAS DETECTADAS ---
+# Armazenar as placas detectadas
 placas_detectadas = []
 
-# --- LOOP PRINCIPAL ---
+# Loop
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
         break  # fim do vídeo
 
-    # --- DETECÇÃO COM YOLO ---
-    results = model.predict(frame, conf=0.5, verbose=False)
+    # Libera o poder preditivo do seu modelo em dados do mundo real
+    results = model.predict(frame, conf=0.35, verbose=False)
 
+    # Loop sobre as detecções da placa
     for r in results:
         for box in r.boxes:
             x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-            # --- RECORTAR PLACA ---
+            # Recorta a Placa
             placa_crop = frame[y1:y2, x1:x2]
             if placa_crop.size == 0:
                 continue
 
+            # Transforma para a cor cinza para facilitar na captura e suaviza os ruidos
             placa_gray = cv2.cvtColor(placa_crop, cv2.COLOR_BGR2GRAY)
             placa_gray = cv2.bilateralFilter(placa_gray, 9, 75, 75)
+            placa_gray = cv2.convertScaleAbs(placa_gray, alpha=2.0, beta=30)
             _, placa_bin = cv2.threshold(placa_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-            # --- OCR ---
+            # OCR
             texto = pytesseract.image_to_string(
                 placa_bin,
                 config='--psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
             )
 
+            # Tenta facilitar na captura da placa filtrando o que pode capturar
             texto = re.sub(r'[^A-Z0-9]', '', texto.upper())
             if len(texto) > 7:
                 texto = texto[-7:]
@@ -51,17 +54,17 @@ while cap.isOpened():
                 placas_detectadas.append(texto)
                 print("Placa detectada:", texto)
 
-            # --- DESENHAR NO FRAME ---
+            # Faz a marcação da placa
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(frame, texto, (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
-    # --- MOSTRAR VÍDEO EM TEMPO REAL ---
+    # Mostra o vídeo
     cv2.imshow("Detecção de Placas", frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-# --- FINALIZAR ---
+# Finaliza
 cap.release()
 cv2.destroyAllWindows()
 
