@@ -1,11 +1,11 @@
 from sqlalchemy import create_engine, text
 
 # --- Configurações do banco ---
-host = ""
-port = ""
-database = ""
-user = ""
-password = "%"
+host = ""       # IP da rede
+port = ""       # Porta
+database = ""   # Database do banco
+user = ""       # Usuário
+password = ""   # Senha
 
 DATABASE_URL = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
 
